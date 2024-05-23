@@ -1,0 +1,56 @@
+﻿@page "/todo_list"
+@inject ITasksService tasksFunctions
+@inject AuthenticationStateProvider _authenticationStateProvider
+@attribute [Authorize]
+
+<div class="container">
+    <h1 class="text-center mb-3">To-Do List</h1>
+
+    <div class="d-flex justify-content-around my-3">
+        <button class="btn btn-primary" @onclick="OpenModalAdd">Add Task</button>
+    </div>
+
+    <div class="card text-center">
+        <div class="card-header">
+            <div class="row justify-content-around">
+                <div class="col-md-auto fs-4">Name</div>
+                <div class="col-md-auto fs-4">Date</div>
+                <div class="col-md-auto fs-4">Countdown</div>
+                <div class="col-md-auto fs-4">Status</div>
+                <div class="col-md-auto fs-4">Priority</div>
+            </div>
+        </div>
+    </div>
+
+    @foreach (var task in Tasks)
+    {
+        <ToDoList_Blazor.Components.TodoCard todo="@task" Id="@task.Id" />
+    }
+</div>
+
+<ToDoList_Blazor.Components.AddTask UserId="@UserId" @ref="AddTask" />
+
+@functions {
+    List<Todo> Tasks = new List<Todo>();
+    private ToDoList_Blazor.Components.AddTask AddTask { get; set; }
+
+    private string UserId = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserId = await getUserId();
+        Tasks = await tasksFunctions.GetTodosAsync(UserId);
+    }
+
+    private void OpenModalAdd()
+    {
+        AddTask.Open();
+    }
+
+    async Task<string> getUserId()
+    {
+        var user = (await _authenticationStateProvider.GetAuthenticationStateAsync()).User;
+        var UserId = user.FindFirst(u => u.Type.Contains("nameidentifier"))?.Value;
+        return UserId;
+    }
+}
